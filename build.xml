@@ -1,0 +1,54 @@
+<!--Ant build script for SimonClient -->
+<!-- $Id: build.xml,v 1.10 2008/08/08 20:00:02 jklett Exp $ -->
+
+<project name="plusplusbot" default="all" basedir=".">
+
+    <property name="build" value="classes" />
+    <property name="etc" value="etc"/>
+    <property name="temp" value="temp"/>
+    <property name="lib" value="lib"/>
+    <property name="src" value="src"/>
+    <property name="deploy" value="deploy"/>
+    <property name="jarfile" value="plusplusbot.jar"/>
+    <property name="log4jprops" value="log4j.properties" />
+    <property name="metainf" value="**/META-INF/" />
+
+    <path id="compilerPath">
+        <pathelement path="${lib}/pircbot.jar:${lib}/mogile4j.jar:${lib}/log4j.jar"/>
+    </path>
+
+    <target name="compile">
+        <mkdir dir="${build}"/>
+        <javac srcdir="${src}" destdir="${build}" debug="on">
+            <classpath refid="compilerPath"/>
+        </javac>
+    </target>
+
+    <target name="build-jar" depends="compile">
+        <mkdir dir="${temp}"/>
+        <copy todir="${temp}">
+            <fileset dir="${build}"/>
+        </copy>
+        <!-- expand library jars -->
+        <unjar dest="${temp}">
+            <patternset>
+                <exclude name="${metainf}" />
+            </patternset>
+            <fileset dir="${lib}">
+                <include name="**/*.jar" />
+            </fileset>
+        </unjar>
+        <!-- jar it up -->
+        <jar destfile="${jarfile}" basedir="${temp}" manifest="${etc}/PlusPlusBotMainClass" />
+    </target>
+
+    <target name="all" depends="clean,compile,build-jar"/>
+
+    <target name="clean">
+        <delete dir="${build}"/>
+        <delete dir="${deploy}"/>
+        <delete file="${jarfile}"/>
+        <delete dir="${temp}"/>
+    </target>
+
+</project>
