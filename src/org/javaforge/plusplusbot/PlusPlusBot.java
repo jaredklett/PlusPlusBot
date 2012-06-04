@@ -75,11 +75,14 @@ public class PlusPlusBot extends PircBot {
         }
     }
 
+ /* Not sure what this does yet, but I know it's not what I thought originally...
+
     public void onNickChange(String oldNick, String login, String hostname, String newNick) {
         if (oldNick.equalsIgnoreCase("plusplusbot")) {
             setIdentity("plusplusbot");
         }
     }
+*/
 
     public void onMessage(String channel, String sender, String login, String hostname, String message) {
         if (message.contains("++")) {
@@ -174,7 +177,7 @@ public class PlusPlusBot extends PircBot {
         try {
             PrintWriter out = new PrintWriter(new FileWriter(scoreFile));
             for (Score score : scoreMap.values()) {
-                out.println(score.getNick() + " " + score.getScore());
+                out.println(score);
             }
             out.close();
         } catch (IOException e) {
@@ -182,7 +185,7 @@ public class PlusPlusBot extends PircBot {
         }
     }
 
-    class Score implements Serializable {
+    class Score {
 
         private String nick;
         private int score;
@@ -201,18 +204,13 @@ public class PlusPlusBot extends PircBot {
             score++;
         }
 
-        public String getNick() {
-            return nick;
-        }
-
         public int getScore() {
             return score;
         }
 
         public String toString() {
             StringBuilder builder = new StringBuilder();
-            builder.append("Nick: ").append(nick);
-            builder.append(", Score: ").append(score);
+            builder.append(nick).append(" ").append(score);
             return builder.toString();
         }
     }
