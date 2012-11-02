@@ -8,14 +8,14 @@ import java.io.*;
 import java.util.*;
 
 /**
- * TODO
+ * Implements plusplusbot logic.
  *
  * @author Jared Klett
  */
 
 public class PlusPlusBot extends PircBot {
 
-    private File scoreFile = new File("/home/jklett/plusplusbot-scores.object");
+    private File scoreFile = new File("/home/jklett/ppb.obj");
     private Random random = new Random();
     private List<String> autoJoinList = new ArrayList<String>();
     private Map<String,Score> scoreMap = new HashMap<String,Score>();
@@ -47,6 +47,7 @@ public class PlusPlusBot extends PircBot {
         autoJoinList.add("#bliptv");
         autoJoinList.add("#dev");
         autoJoinList.add("#lunch");
+        autoJoinList.add("#cats");
 //        autoJoinList.add("#pircbot");
     }
 
@@ -155,16 +156,11 @@ public class PlusPlusBot extends PircBot {
     public void loadScoresFromDisk() {
         if (scoreFile.exists()) {
             try {
-                BufferedReader in = new BufferedReader(new FileReader(scoreFile));
-                String line = in.readLine();
-                while (line != null) {
-                    String[] parts = line.split("\\s");
-                    if (parts.length == 2) {
-                        scoreMap.put(parts[0], new Score(parts[0], Integer.parseInt(parts[1])));
-                    } else {
-                        System.out.println("Found bad line while loading scores:\n" + line);
-                    }
-                    line = in.readLine();
+                ObjectInputStream in = new ObjectInputStream(new FileInputStream(scoreFile));
+                Object object = in.readObject();
+                Score[] scores = (Score[])object;
+                for (Score score : scores) {
+                    scoreMap.put(score.getNick(), score);
                 }
                 in.close();
             } catch (Exception e) {
@@ -175,43 +171,13 @@ public class PlusPlusBot extends PircBot {
 
     public void saveScoresToDisk() {
         try {
-            PrintWriter out = new PrintWriter(new FileWriter(scoreFile));
-            for (Score score : scoreMap.values()) {
-                out.println(score);
-            }
+            Collection<Score> values = scoreMap.values();
+            Score[] scores = values.toArray(new Score[values.size()]);
+            ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(scoreFile));
+            out.writeObject(scores);
             out.close();
         } catch (IOException e) {
             e.printStackTrace();
-        }
-    }
-
-    class Score {
-
-        private String nick;
-        private int score;
-
-        public Score(String nick) {
-            this.nick = nick;
-            this.score = 1;
-        }
-
-        public Score(String nick, int score) {
-            this.nick = nick;
-            this.score = score;
-        }
-
-        public void bump() {
-            score++;
-        }
-
-        public int getScore() {
-            return score;
-        }
-
-        public String toString() {
-            StringBuilder builder = new StringBuilder();
-            builder.append(nick).append(" ").append(score);
-            return builder.toString();
         }
     }
 
