@@ -38,8 +38,13 @@ public class PlusPlusBot extends PircBot {
             ", do you need a time out?"
     };
 
-    public PlusPlusBot() {
+    private String host;
+    private int port;
+
+    public PlusPlusBot(String host, int port) {
         super();
+        this.host = host;
+        this.port = port;
         String myNick = "plusplusbot";
         setIdentity(myNick);
         setVersion("0.1");
@@ -59,12 +64,12 @@ public class PlusPlusBot extends PircBot {
 
     public void start() {
         try {
-            connect("irc.corp.pokkari.net");
+            connect(host, port);
         } catch (NickAlreadyInUseException e) {
             try { Thread.sleep(30 * 1000L); } catch (InterruptedException ie) { /* ignored */ }
             setIdentity("realplusplusbot");
             try {
-                connect("irc.corp.pokkari.net");
+                connect(host, port);
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
@@ -87,6 +92,7 @@ public class PlusPlusBot extends PircBot {
 
     public void onMessage(String channel, String sender, String login, String hostname, String message) {
         if (message.contains("++")) {
+            // throw away anything where the ++ is not flush to the nick
             if (message.charAt(message.indexOf("+") - 1) == ' ') {
                 return;
             }
@@ -98,6 +104,7 @@ public class PlusPlusBot extends PircBot {
             User[] users = getUsers(channel);
             boolean found = false;
             for (User user : users) {
+                // TODO: split on _ or - and award points to the nick? Takes care of jklett++ vs jklett-laptop++
                 if (user.getNick().equalsIgnoreCase(nick)) {
                     found = true;
                     break;

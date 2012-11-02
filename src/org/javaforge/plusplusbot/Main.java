@@ -15,9 +15,9 @@ public class Main extends Thread {
     /** IRC bot instance. */
     private PlusPlusBot bot;
 
-    public Main() {
+    public Main(String host, int port) {
         registerShutdownHook();
-        bot = new PlusPlusBot();
+        bot = new PlusPlusBot(host, port);
         bot.loadScoresFromDisk();
         bot.start();
     }
@@ -60,7 +60,18 @@ public class Main extends Thread {
     }
 
     public static void main(String[] args) {
-        Main main = new Main();
+        if (args.length < 1) {
+            System.out.println("Usage: java -jar plusplusbot.jar <host> [<port>]");
+        }
+        int port = 6667;
+        if (args.length >= 2) {
+            try {
+                port = Integer.parseInt(args[1]);
+            } catch (NumberFormatException e) {
+                System.err.println("Could not parse port number: " + args[1] + ", defaulting to " + port);
+            }
+        }
+        Main main = new Main(args[0], port);
         main.start();
     }
 
