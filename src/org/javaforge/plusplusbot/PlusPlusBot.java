@@ -52,7 +52,7 @@ public class PlusPlusBot extends PircBot {
         autoJoinList.add("#bliptv");
         autoJoinList.add("#dev");
         autoJoinList.add("#lunch");
-        autoJoinList.add("#cats");
+        autoJoinList.add("#cute");
 //        autoJoinList.add("#pircbot");
     }
 
