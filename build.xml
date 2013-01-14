@@ -8,7 +8,6 @@
     <property name="temp" value="temp"/>
     <property name="lib" value="lib"/>
     <property name="src" value="src"/>
-    <property name="deploy" value="deploy"/>
     <property name="jarfile" value="plusplusbot.jar"/>
     <property name="log4jprops" value="log4j.properties" />
     <property name="metainf" value="**/META-INF/" />
@@ -46,7 +45,6 @@
 
     <target name="clean">
         <delete dir="${build}"/>
-        <delete dir="${deploy}"/>
         <delete file="${jarfile}"/>
         <delete dir="${temp}"/>
     </target>
