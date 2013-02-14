@@ -15,10 +15,13 @@ import java.util.*;
 
 public class PlusPlusBot extends PircBot {
 
+    private static final long PP_THROTTLE_LIMIT = 30 * 1000L;
+
     private File scoreFile = new File("/home/jklett/ppb.obj");
     private Random random = new Random();
     private List<String> autoJoinList = new ArrayList<String>();
     private Map<String,Score> scoreMap = new HashMap<String,Score>();
+    private Map<String,Giver> giverMap = new HashMap<String,Giver>();
     private String[] prefixes = {
             "gee whiz ",
             "golly ",
@@ -27,6 +30,29 @@ public class PlusPlusBot extends PircBot {
             "my my ",
             "well butter my biscuit ",
             "why "
+    };
+    private String[] plusplusExclamations = {
+            "w00t! ",
+            "nice! ",
+            "suh-weet! ",
+            "well played! ",
+            "zing! ",
+            "heyoooo! ",
+            "sweet! "
+    };
+    private String[] minusminusExclamations = {
+            "ouch! ",
+            "daaaang! ",
+            "denied! ",
+            "ooooh! ",
+            "owie! ",
+            "ya dun goofed! ",
+            "boom! "
+    };
+    private String[] throttled = {
+            "Sorry, you're trying to award too fast.",
+            "Seriously, slow your roll.",
+            "Now you're just embarassing yourself."
     };
     private String[] snark = {
             ", that's so creative of you.",
@@ -49,11 +75,11 @@ public class PlusPlusBot extends PircBot {
         setIdentity(myNick);
         setVersion("0.1");
         setVerbose(true);
-        autoJoinList.add("#bliptv");
-        autoJoinList.add("#dev");
-        autoJoinList.add("#lunch");
-        autoJoinList.add("#cute");
-//        autoJoinList.add("#pircbot");
+//        autoJoinList.add("#bliptv");
+//        autoJoinList.add("#dev");
+//        autoJoinList.add("#lunch");
+//        autoJoinList.add("#cute");
+        autoJoinList.add("#ppb");
     }
 
     private void setIdentity(String ident) {
@@ -96,6 +122,23 @@ public class PlusPlusBot extends PircBot {
             if (message.charAt(message.indexOf("+") - 1) == ' ') {
                 return;
             }
+            Giver giver = giverMap.get(sender);
+            if (giver == null) {
+                // First time. Carry on.
+                giverMap.put(sender, new Giver(sender, System.currentTimeMillis()));
+            } else {
+                boolean withinLimit = (System.currentTimeMillis() - giver.getPlusplusTime()) < PP_THROTTLE_LIMIT;
+                if (withinLimit) {
+                    sendMessage(channel, throttled[giver.getAttempts() % throttled.length]);
+                    giver.setAttempts(giver.getAttempts() + 1);
+                    giverMap.put(sender, giver);
+                    return;
+                } else {
+                    giver.setPlusplusTime(System.currentTimeMillis());
+                    giver.setAttempts(0);
+                    giverMap.put(sender, giver);
+                }
+            }
             String nick = message.substring(0, message.indexOf("+"));
             if (nick.equalsIgnoreCase(sender)) {
                 sendMessage(channel, "Sorry " + sender + ", you can't award yourself points.");
@@ -103,9 +146,16 @@ public class PlusPlusBot extends PircBot {
             }
             User[] users = getUsers(channel);
             boolean found = false;
+            String originalNick = nick;
+            // Split on _ or - and award points to the nick.
+            // Takes care of jklett++ vs jklett-laptop++
+            if (nick.contains("_")) {
+                nick = nick.split("_")[0];
+            } else if (nick.contains("-")) {
+                nick = nick.split("-")[0];
+            }
             for (User user : users) {
-                // TODO: split on _ or - and award points to the nick? Takes care of jklett++ vs jklett-laptop++
-                if (user.getNick().equalsIgnoreCase(nick)) {
+                if (user.getNick().equalsIgnoreCase(originalNick)) {
                     found = true;
                     break;
                 }
@@ -120,6 +170,7 @@ public class PlusPlusBot extends PircBot {
             } else {
                 score.bump();
             }
+            sendMessage(channel, plusplusExclamations[random.nextInt(plusplusExclamations.length)] + originalNick + " now at " + score.getScore() + "!");
             scoreMap.put(nick, score);
             return;
         }
@@ -136,6 +187,16 @@ public class PlusPlusBot extends PircBot {
             String command = parts[1];
             if (command.startsWith("help")) {
                 sendMessage(channel, "How to check a score: plusplusbot score <nick>");
+                return;
+            }
+            if (command.startsWith("scores")) {
+                if (scoreMap.size() == 0) {
+                    sendMessage(channel, "Sorry, I don't have any scores to report.");
+                    return;
+                }
+                for (Score score : scoreMap.values()) {
+                    sendMessage(channel, score.getNick() + " has received " + score.getScore() + " point" + (score.getScore() == 1 ? "" : "s") + " so far.");
+                }
                 return;
             }
             if (command.startsWith("score")) {
