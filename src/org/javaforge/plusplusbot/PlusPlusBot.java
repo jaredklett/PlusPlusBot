@@ -15,7 +15,7 @@ import java.util.*;
 
 public class PlusPlusBot extends PircBot {
 
-    private static final long PP_THROTTLE_LIMIT = 30 * 1000L;
+    private static final long PP_THROTTLE_LIMIT = 10 * 1000L;
 
     private File scoreFile = new File("/home/jklett/ppb.obj");
     private Random random = new Random();
@@ -77,11 +77,11 @@ public class PlusPlusBot extends PircBot {
         setIdentity(myNick);
         setVersion("0.1");
         setVerbose(true);
-//        autoJoinList.add("#bliptv");
-//        autoJoinList.add("#dev");
-//        autoJoinList.add("#lunch");
-//        autoJoinList.add("#cute");
-        autoJoinList.add("#ppb");
+        autoJoinList.add("#bliptv");
+        autoJoinList.add("#dev");
+        autoJoinList.add("#lunch");
+        autoJoinList.add("#techops");
+        autoJoinList.add("#cute");
     }
 
     private void setIdentity(String ident) {
@@ -154,13 +154,7 @@ public class PlusPlusBot extends PircBot {
         User[] users = getUsers(channel);
         boolean found = false;
         String originalNick = nick;
-        // Split on _ or - and award points to the nick.
-        // Takes care of jklett++ vs jklett-laptop++
-        if (nick.contains("_")) {
-            nick = nick.split("_")[0];
-        } else if (nick.contains("-")) {
-            nick = nick.split("-")[0];
-        }
+        nick = splitNick(nick);
         for (User user : users) {
             if (user.getNick().equalsIgnoreCase(originalNick)) {
                 found = true;
@@ -218,6 +212,7 @@ public class PlusPlusBot extends PircBot {
             }
             String nick = parts[2];
             Score score = scoreMap.get(nick);
+            nick = splitNick(nick);
             if (score == null) {
                 sendMessage(channel, sender + ": sorry, but " + nick + " hasn't received any points yet.");
                 return;
@@ -226,6 +221,17 @@ public class PlusPlusBot extends PircBot {
         } else {
             sendMessage(channel, sender + ": sorry, I don't understand the command '" + command + "'");
         }
+    }
+
+    private String splitNick(String nick) {
+        // Split on _ or - and award points to the nick.
+        // Takes care of jklett++ vs jklett-laptop++
+        if (nick.contains("_")) {
+            nick = nick.split("_")[0];
+        } else if (nick.contains("-")) {
+            nick = nick.split("-")[0];
+        }
+        return nick;
     }
 
     public void loadScoresFromDisk() {
