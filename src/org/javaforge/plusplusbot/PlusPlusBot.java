@@ -38,7 +38,8 @@ public class PlusPlusBot extends PircBot {
             "well played! ",
             "zing! ",
             "heyoooo! ",
-            "sweet! "
+            "sweet! ",
+            "fist bump! "
     };
     private String[] minusminusExclamations = {
             "ouch! ",
@@ -47,7 +48,8 @@ public class PlusPlusBot extends PircBot {
             "ooooh! ",
             "owie! ",
             "ya dun goofed! ",
-            "boom! "
+            "boom! ",
+            "oh no you did not! "
     };
     private String[] throttled = {
             "Sorry, you're trying to award too fast.",
@@ -107,120 +109,125 @@ public class PlusPlusBot extends PircBot {
         }
     }
 
- /* Not sure what this does yet, but I know it's not what I thought originally...
-
-    public void onNickChange(String oldNick, String login, String hostname, String newNick) {
-        if (oldNick.equalsIgnoreCase("plusplusbot")) {
-            setIdentity("plusplusbot");
-        }
-    }
-*/
-
     public void onMessage(String channel, String sender, String login, String hostname, String message) {
         if (message.contains("++")) {
-            // throw away anything where the ++ is not flush to the nick
-            if (message.charAt(message.indexOf("+") - 1) == ' ') {
-                return;
-            }
-            Giver giver = giverMap.get(sender);
-            if (giver == null) {
-                // First time. Carry on.
-                giverMap.put(sender, new Giver(sender, System.currentTimeMillis()));
-            } else {
-                boolean withinLimit = (System.currentTimeMillis() - giver.getPlusplusTime()) < PP_THROTTLE_LIMIT;
-                if (withinLimit) {
-                    sendMessage(channel, throttled[giver.getAttempts() % throttled.length]);
-                    giver.setAttempts(giver.getAttempts() + 1);
-                    giverMap.put(sender, giver);
-                    return;
-                } else {
-                    giver.setPlusplusTime(System.currentTimeMillis());
-                    giver.setAttempts(0);
-                    giverMap.put(sender, giver);
-                }
-            }
-            String nick = message.substring(0, message.indexOf("+"));
-            if (nick.equalsIgnoreCase(sender)) {
-                sendMessage(channel, "Sorry " + sender + ", you can't award yourself points.");
-                return;
-            }
-            User[] users = getUsers(channel);
-            boolean found = false;
-            String originalNick = nick;
-            // Split on _ or - and award points to the nick.
-            // Takes care of jklett++ vs jklett-laptop++
-            if (nick.contains("_")) {
-                nick = nick.split("_")[0];
-            } else if (nick.contains("-")) {
-                nick = nick.split("-")[0];
-            }
-            for (User user : users) {
-                if (user.getNick().equalsIgnoreCase(originalNick)) {
-                    found = true;
-                    break;
-                }
-            }
-            if (!found) {
-                sendMessage(channel, "Sorry " + sender + ", I don't see a user with the name '" + nick + "'");
-                return;
-            }
-            Score score = scoreMap.get(nick);
-            if (score == null) {
-                score = new Score(nick);
-            } else {
-                score.bump();
-            }
-            sendMessage(channel, plusplusExclamations[random.nextInt(plusplusExclamations.length)] + originalNick + " now at " + score.getScore() + "!");
-            scoreMap.put(nick, score);
+            process("+", message, channel, sender);
+            return;
+        }
+        if (message.contains("--")) {
+            process("-", message, channel, sender);
             return;
         }
         if (message.startsWith("plusplusbot")) {
-            String[] parts = message.split("\\s");
-            if (parts.length > 3) {
-                sendMessage(channel, prefixes[random.nextInt(prefixes.length)] + sender + snark[random.nextInt(snark.length)]);
-                return;
-            }
-            if (parts.length <= 1) {
-                sendMessage(channel, sender + ": sorry, I didn't understand that.");
-                return;
-            }
-            String command = parts[1];
-            if (command.startsWith("help")) {
-                sendMessage(channel, "How to check a score: plusplusbot score <nick>");
-                return;
-            }
-            if (command.startsWith("scores")) {
-                if (scoreMap.size() == 0) {
-                    sendMessage(channel, "Sorry, I don't have any scores to report.");
-                    return;
-                }
-                for (Score score : scoreMap.values()) {
-                    sendMessage(channel, score.getNick() + " has received " + score.getScore() + " point" + (score.getScore() == 1 ? "" : "s") + " so far.");
-                }
-                return;
-            }
-            if (command.startsWith("score")) {
-                if (parts.length <= 2) {
-                    sendMessage(channel, sender + ": sorry, you have to ask about a specific nick. For example: plusplusbot score <nick>");
-                    return;
-                }
-                String nick = parts[2];
-                Score score = scoreMap.get(nick);
-                if (score == null) {
-                    sendMessage(channel, sender + ": sorry, but " + nick + " hasn't received any points yet.");
-                    return;
-                }
-                sendMessage(channel, nick + " has received " + score.getScore() + " point" + (score.getScore() == 1 ? "" : "s") + " so far.");
-            } else {
-                sendMessage(channel, sender + ": sorry, I don't understand the command '" + command + "'");
-            }
+            respondToCommand(message, channel, sender);
         }
     }
-/*
-    public void onPrivateMessage(String sender, String login, String hostname, String message) {
-        sendMessage(sender, "hi");
+
+    private void process(String trigger, String message, String channel, String sender) {
+        // throw away anything where the ++ or -- is not flush to the nick
+        if (message.charAt(message.indexOf(trigger) - 1) == ' ') {
+            return;
+        }
+        boolean isPlusPlus = trigger.equals("+");
+        Giver giver = giverMap.get(sender);
+        if (giver == null) {
+            // First time. Carry on.
+            giverMap.put(sender, new Giver(sender, System.currentTimeMillis()));
+        } else {
+            boolean withinLimit = (System.currentTimeMillis() - giver.getPlusplusTime()) < PP_THROTTLE_LIMIT;
+            if (withinLimit) {
+                sendMessage(channel, throttled[giver.getAttempts() % throttled.length]);
+                giver.setAttempts(giver.getAttempts() + 1);
+                giverMap.put(sender, giver);
+                return;
+            } else {
+                giver.setPlusplusTime(System.currentTimeMillis());
+                giver.setAttempts(0);
+                giverMap.put(sender, giver);
+            }
+        }
+        String nick = message.substring(0, message.indexOf(trigger));
+        if (nick.equalsIgnoreCase(sender)) {
+            sendMessage(channel, "Sorry " + sender + ", you can't " + (isPlusPlus ? "award yourself" : "decrement your own") + " points.");
+            return;
+        }
+        User[] users = getUsers(channel);
+        boolean found = false;
+        String originalNick = nick;
+        // Split on _ or - and award points to the nick.
+        // Takes care of jklett++ vs jklett-laptop++
+        if (nick.contains("_")) {
+            nick = nick.split("_")[0];
+        } else if (nick.contains("-")) {
+            nick = nick.split("-")[0];
+        }
+        for (User user : users) {
+            if (user.getNick().equalsIgnoreCase(originalNick)) {
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            sendMessage(channel, "Sorry " + sender + ", I don't see a user with the name '" + originalNick + "'");
+            return;
+        }
+        Score score = scoreMap.get(nick);
+        if (score == null) {
+            score = new Score(nick);
+        }
+        if (isPlusPlus)
+            score.bump();
+        else
+            score.diss();
+        if (isPlusPlus)
+            sendMessage(channel, plusplusExclamations[random.nextInt(plusplusExclamations.length)] + originalNick + " now at " + score.getScore() + "!");
+        else
+            sendMessage(channel, minusminusExclamations[random.nextInt(minusminusExclamations.length)] + originalNick + " now at " + score.getScore() + "!");
+        scoreMap.put(nick, score);
     }
-*/
+
+    private void respondToCommand(String message, String channel, String sender) {
+        String[] parts = message.split("\\s");
+        if (parts.length > 3) {
+            sendMessage(channel, prefixes[random.nextInt(prefixes.length)] + sender + snark[random.nextInt(snark.length)]);
+            return;
+        }
+        if (parts.length <= 1) {
+            sendMessage(channel, sender + ": sorry, I didn't understand that.");
+            return;
+        }
+        String command = parts[1];
+        if (command.startsWith("help")) {
+            sendMessage(channel, "How to check a score: plusplusbot score <nick>");
+            return;
+        }
+        if (command.startsWith("scores")) {
+            if (scoreMap.size() == 0) {
+                sendMessage(channel, "Sorry, I don't have any scores to report.");
+                return;
+            }
+            for (Score score : scoreMap.values()) {
+                sendMessage(channel, score.getNick() + " has received " + score.getScore() + " point" + (score.getScore() == 1 ? "" : "s") + " so far.");
+            }
+            return;
+        }
+        if (command.startsWith("score")) {
+            if (parts.length <= 2) {
+                sendMessage(channel, sender + ": sorry, you have to ask about a specific nick. For example: plusplusbot score <nick>");
+                return;
+            }
+            String nick = parts[2];
+            Score score = scoreMap.get(nick);
+            if (score == null) {
+                sendMessage(channel, sender + ": sorry, but " + nick + " hasn't received any points yet.");
+                return;
+            }
+            sendMessage(channel, nick + " has received " + score.getScore() + " point" + (score.getScore() == 1 ? "" : "s") + " so far.");
+        } else {
+            sendMessage(channel, sender + ": sorry, I don't understand the command '" + command + "'");
+        }
+    }
+
     public void loadScoresFromDisk() {
         if (scoreFile.exists()) {
             try {

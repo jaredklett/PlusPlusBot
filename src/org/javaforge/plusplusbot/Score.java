@@ -15,7 +15,7 @@ public class Score implements Serializable {
 
     public Score(String nick) {
         this.nick = nick;
-        this.score = 1;
+        this.score = 0;
     }
 
     public Score(String nick, int score) {
@@ -29,6 +29,10 @@ public class Score implements Serializable {
 
     public void bump() {
         score++;
+    }
+
+    public void diss() {
+        score--;
     }
 
     public int getScore() {
