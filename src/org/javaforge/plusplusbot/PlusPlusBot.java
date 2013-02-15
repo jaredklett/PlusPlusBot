@@ -4,6 +4,7 @@ import org.jibble.pircbot.NickAlreadyInUseException;
 import org.jibble.pircbot.PircBot;
 import org.jibble.pircbot.User;
 
+import javax.xml.bind.DatatypeConverter;
 import java.io.*;
 import java.util.*;
 
@@ -16,6 +17,8 @@ import java.util.*;
 public class PlusPlusBot extends PircBot {
 
     private static final long PP_THROTTLE_LIMIT = 10 * 1000L;
+    private static final String UNDERSCORE = "_";
+    private static final String HYPHEN = "-";
 
     private File scoreFile = new File("/home/jklett/ppb.obj");
     private Random random = new Random();
@@ -82,6 +85,7 @@ public class PlusPlusBot extends PircBot {
         autoJoinList.add("#lunch");
         autoJoinList.add("#techops");
         autoJoinList.add("#cute");
+        autoJoinList.add("#ppbtest");
     }
 
     private void setIdentity(String ident) {
@@ -120,6 +124,14 @@ public class PlusPlusBot extends PircBot {
         }
         if (message.startsWith("plusplusbot")) {
             respondToCommand(message, channel, sender);
+        }
+    }
+
+    public void onKick(String channel, String kickerNick, String kickerLogin, String kickerHostname, String recipientNick, String reason) {
+        if (recipientNick.equalsIgnoreCase(getNick())) {
+            try { Thread.sleep(2000); } catch (InterruptedException e) { /* ignored */ }
+            joinChannel(channel);
+            sendMessage(channel, "Ow. That hurt.");
         }
     }
 
@@ -224,12 +236,11 @@ public class PlusPlusBot extends PircBot {
     }
 
     private String splitNick(String nick) {
-        // Split on _ or - and award points to the nick.
-        // Takes care of jklett++ vs jklett-laptop++
-        if (nick.contains("_")) {
-            nick = nick.split("_")[0];
-        } else if (nick.contains("-")) {
-            nick = nick.split("-")[0];
+        // Split on _ or - and award points to the nick. Takes care of jklett++ vs jklett-laptop++
+        if (nick.contains(UNDERSCORE)) {
+            nick = nick.split(UNDERSCORE)[0];
+        } else if (nick.contains(HYPHEN)) {
+            nick = nick.split(HYPHEN)[0];
         }
         return nick;
     }
@@ -237,11 +248,16 @@ public class PlusPlusBot extends PircBot {
     public void loadScoresFromDisk() {
         if (scoreFile.exists()) {
             try {
-                ObjectInputStream in = new ObjectInputStream(new FileInputStream(scoreFile));
-                Object object = in.readObject();
-                Score[] scores = (Score[])object;
-                for (Score score : scores) {
-                    scoreMap.put(score.getNick(), score);
+                BufferedReader in = new BufferedReader(new FileReader(scoreFile));
+                String line;
+                while ((line = in.readLine()) != null) {
+                    try {
+                        String decoded = new String(DatatypeConverter.parseBase64Binary(line), "UTF-8");
+                        String[] parts = decoded.split("\\s");
+                        scoreMap.put(parts[0], new Score(parts[0], Integer.parseInt(parts[1])));
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                 }
                 in.close();
             } catch (Exception e) {
@@ -253,9 +269,10 @@ public class PlusPlusBot extends PircBot {
     public void saveScoresToDisk() {
         try {
             Collection<Score> values = scoreMap.values();
-            Score[] scores = values.toArray(new Score[values.size()]);
-            ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(scoreFile));
-            out.writeObject(scores);
+            PrintWriter out = new PrintWriter(new FileWriter(scoreFile));
+            for (Score score : values) {
+                out.println(DatatypeConverter.printBase64Binary(score.toString().getBytes("UTF-8")));
+            }
             out.close();
         } catch (IOException e) {
             e.printStackTrace();

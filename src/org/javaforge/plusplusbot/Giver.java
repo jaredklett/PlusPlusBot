@@ -1,11 +1,12 @@
 package org.javaforge.plusplusbot;
 
 /**
- * TODO
+ * Tracks who's giving out ++ or -- and the last time they did.
  *
  * @author Jared Klett
  */
 
+@SuppressWarnings("unused")
 public class Giver {
 
     private String nick;

@@ -4,10 +4,12 @@ import java.io.Serializable;
 
 /**
  * A serializable object to save scores to disk.
+ * TODO: ditch serialization
  *
  * @author Jared Klett
  */
 
+@SuppressWarnings("unused")
 public class Score implements Serializable {
 
     private String nick;
