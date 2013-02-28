@@ -4,7 +4,6 @@ import java.io.Serializable;
 
 /**
  * A serializable object to save scores to disk.
- * TODO: ditch serialization
  *
  * @author Jared Klett
  */

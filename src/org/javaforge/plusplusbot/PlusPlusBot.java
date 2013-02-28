@@ -140,6 +140,10 @@ public class PlusPlusBot extends PircBot {
         if (message.charAt(message.indexOf(trigger) - 1) == ' ') {
             return;
         }
+        // make sure sender is actually in the chat room
+        if (!isNickInChannel(channel, sender)) {
+            return;
+        }
         boolean isPlusPlus = trigger.equals("+");
         Giver giver = giverMap.get(sender);
         if (giver == null) {
@@ -190,6 +194,18 @@ public class PlusPlusBot extends PircBot {
         else
             sendMessage(channel, minusminusExclamations[random.nextInt(minusminusExclamations.length)] + originalNick + " now at " + score.getScore() + "!");
         scoreMap.put(nick, score);
+    }
+
+    private boolean isNickInChannel(String channel, String nick) {
+        User[] users = getUsers(channel);
+        boolean found = false;
+        for (User user : users) {
+            if (user.getNick().equalsIgnoreCase(nick)) {
+                found = true;
+                break;
+            }
+        }
+        return found;
     }
 
     private void respondToCommand(String message, String channel, String sender) {
