@@ -248,7 +248,10 @@ public class PlusPlusBot extends PircBot {
                 sendMessage(channel, sender + ": sorry, but " + nick + " hasn't received any points yet.");
                 return;
             }
-            sendMessage(channel, nick + " has received " + score.getScore() + " point" + (score.getScore() == 1 ? "" : "s") + " so far.");
+            if (score.getScore() < 0)
+                sendMessage(channel, nick + " is " + score.getScore() + " point" + (score.getScore() == 1 ? "" : "s") + " in the hole so far.");
+            else
+                sendMessage(channel, nick + " has received " + score.getScore() + " point" + (score.getScore() == 1 ? "" : "s") + " so far.");
         } else {
             sendMessage(channel, sender + ": sorry, I don't understand the command '" + command + "'");
         }
