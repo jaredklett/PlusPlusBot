@@ -40,6 +40,8 @@ public class PlusPlusBot extends PircBot {
             "suh-weet! ",
             "well played! ",
             "zing! ",
+            "you go girl! ",
+            "booyakasha! ",
             "heyoooo! ",
             "sweet! ",
             "fist bump! "
@@ -50,6 +52,7 @@ public class PlusPlusBot extends PircBot {
             "denied! ",
             "ooooh! ",
             "owie! ",
+            "awwww snap! ",
             "ya dun goofed! ",
             "boom! ",
             "oh no you did not! "
